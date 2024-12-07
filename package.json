@@ -1,0 +1,19 @@
+{
+  "name": "telegram_project",
+  "version": "1.0.0",
+  "description": "make a telegram bot with a single page website connected",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "start:prod": "node app.js"
+  },
+  "author": "kooroush pasandideh",
+  "license": "ISC",
+  "dependencies": {
+    "bitcoinjs-lib": "^6.1.7",
+    "dotenv": "^16.4.5",
+    "mongoose": "^8.8.3",
+    "node-telegram-bot-api": "^0.66.0",
+    "nodemon": "^3.1.7"
+  }
+}
