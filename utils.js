@@ -137,6 +137,25 @@ async function handleYesOption(chatId, userId) {
     });
 }
 
+async function changephonenum(chatId ,messageId ,userId){
+    let user = await User.findOne({userId:userId})
+    editMessageWithOptions(chatId ,messageId ,"شماره تلفن خود را وارد کنید (همراه 0 اولش)")
+                bot.once("message", async (response) => {
+                    const regex = /^09\d{9}$/;
+                    if (regex.test(response.text)) {
+                        try {
+                            user.phoneNumber = response.text.trim()
+                            await user.save()
+                            editMessageWithOptions(chatId ,messageId ,"شماره تلفن شما با موفقیت ثبت شد")
+                        } catch (error) {
+                            editMessageWithOptions(chatId ,messageId ,"مشکلی رخ داده دوباره تلاش کنید");
+                        }
+                    } else {
+                        sendMessageWithOptions(chatId ,"شماره تلفن وارد شده اشتباه هست")
+                    }
+                });
+}
+
 module.exports = {
     createInlineButtons,
     createInlineKeyboard,
@@ -145,5 +164,6 @@ module.exports = {
     checkUserMembership,
     createBackButton,
     sendMessageWithOptions,
-    editMessageWithOptions
+    editMessageWithOptions,
+    changephonenum
 }

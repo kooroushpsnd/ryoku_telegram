@@ -18,7 +18,7 @@ process.env.NTBA_FIX_350 = 1;
 
 const bot = new TelegramBot(Bot_Token, {polling: true});
 module.exports = bot
-const { createInlineButtons ,createInlineKeyboard , handleReferral ,handleYesOption ,checkUserMembership ,createBackButton, sendMessageWithOptions, editMessageWithOptions } = require('./utils')
+const { createInlineButtons ,changephonenum ,createInlineKeyboard , handleReferral ,handleYesOption ,checkUserMembership ,createBackButton, sendMessageWithOptions, editMessageWithOptions } = require('./utils')
 
 const Crypto = "Dogs"
 
@@ -77,7 +77,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
         const referralLink = `https://t.me/Ry0ku_bot?start=${userId}`;
         const websiteLink = `http://5.75.204.122:8080`
         await bot.sendPhoto(chatId, "./intro.jpg", {
-            caption: `با دعوت هر نفر ۳ هزار تومان هدیه بگیرید\n در بعضی روز های هفته هر نفر ۵ هزار تومان 💸🔥💯\nلینک دعوت شما👇\n${referralLink}\n❗️ توجه کنید که زیر مجموعه های شما برای دریافت موجودی رایگان حتما باید شماره خود را تایید و در کانال ما عضو شوند \n✅ از امکانات دکمه وب ۳ (پایین سمت چپ چت) استفاده کنید تا صاحب امتیاز بیشتر و شانس بالاتری در لاتاری شوید. \n${websiteLink}`,
+            caption: `با دعوت هر نفر ۵۰ داگز هدیه بگیرید\n در بعضی روز های هفته هر نفر ۸۰ داگز 💸🔥💯\nلینک دعوت شما👇\n${referralLink}\n❗️ توجه کنید که زیر مجموعه های شما برای دریافت موجودی رایگان حتما باید شماره خود را تایید و در کانال ما عضو شوند \n✅ از امکانات دکمه وب ۳ (پایین سمت چپ چت) استفاده کنید تا صاحب امتیاز بیشتر و شانس بالاتری در لاتاری شوید. \n${websiteLink}`,
         });
         user.hasSeenImage = true;
         await user.save();
@@ -127,6 +127,7 @@ bot.on("callback_query", async (callbackQuery) => {
     const userId = callbackQuery.from.id;
     const data = callbackQuery.data;
     let user = await User.findOne({ userId });
+    const channelDoc = await Channel.findOne();
     const isAdmin = user.isAdmin ? buttonsAdmin : buttons
     const startOptions = {
         reply_markup: {
@@ -136,28 +137,35 @@ bot.on("callback_query", async (callbackQuery) => {
 
     switch (data) {
         case "phone":
-            editMessageWithOptions(chatId ,messageId ,"شماره تلفن خود را وارد کنید (همراه 0 اولش)")
-            bot.once("message", async (response) => {
-                const regex = /^09\d{9}$/;
-                if (regex.test(response.text)) {
-                    try {
-                        user.phoneNumber = response.text.trim()
-                        await user.save()
-                        editMessageWithOptions(chatId ,messageId ,"شماره تلفن شما با موفقیت ثبت شد")
-                    } catch (error) {
-                        editMessageWithOptions(chatId ,messageId ,"مشکلی رخ داده دوباره تلاش کنید");
-                    }
-                } else {
-                    sendMessageWithOptions(chatId ,"شماره تلفن وارد شده اشتباه هست")
-                }
-            });
-            break;
+            if(user.phoneNumber) {
+                editMessageWithOptions(chatId ,messageId ,`شماره همراه شما ${user.phoneNumber} میباشد  آیا میخواهید آن را تغییر دهید؟` , {
+                    reply_markup: {
+                        inline_keyboard: [
+                            createInlineButtons(
+                                [
+                                    { text:"بله" ,callback_data: "false" }
+                                ]
+                            ),
+                            createBackButton()
+                        ],
+                    },
+                })
+                break
+            }
+            else{
+                changephonenum(chatId ,messageId ,userId)
+                break;
+            }
+        
+        case "false":
+            changephonenum(chatId ,messageId ,userId)
+            break
+            
         case 'back':
             editMessageWithOptions(chatId, messageId, 'Ryoku BOT', startOptions)
             break;
 
         case "channels":
-            const channelDoc = await Channel.findOne();
             editMessageWithOptions(
                 chatId,
                 messageId,
