@@ -24,8 +24,6 @@ services:
     container_name: vue_app
     ports:
       - "8080:80"
-    volumes:
-      - ../ryoku-web/dist:/usr/share/nginx/html
     restart: unless-stopped
 
 volumes:
