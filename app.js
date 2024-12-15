@@ -27,8 +27,8 @@ const buttons = [
     { text: "دعوت از دوستان", callback_data: "add_friend" },
     { text: "کیف پول", callback_data: "wallet" },
     { text: "ادرس کیف پول", callback_data: "walletAddress" },
-    { text: "وبسایت RYOKU", callback_data: "website" },
-    { text: "اضافه کردن شماره تلفن", callback_data: "phone" }
+    { text: "اضافه کردن شماره تلفن", callback_data: "phone" },
+    { text: "راهنما استفاده" ,callback_data: "guide"}
 ]
 
 const buttonsAdmin = [
@@ -37,6 +37,7 @@ const buttonsAdmin = [
     { text: "حذف کردن چنل", callback_data: "delete_channel" },
     { text: "مدیریت ادمین ها", callback_data: "change_admin" },
     { text: "مدیریت پرداخت ها", callback_data: "transactions" },
+    { text: "راهنما استفاده" ,callback_data: "guideAdmin"}
 ]
 
 bot.onText(/\/start(.*)/, async (msg, match) => {
@@ -48,7 +49,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
 
     const referrerId = match[1] ? parseInt(match[1].trim(), 10) : null;
 
-    const welcomeMessage = `${userNameFull}\nخوش امدید به RYOKU BOT`;
+    const welcomeMessage = `${userNameFull}\nخوش امدید به RIOKU BOT`;
 
     let user = await User.findOne({ userId });
     if (!user) {
@@ -66,7 +67,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
             const referrer = await User.findOne({ userId: referrerId });
             if (referrer) {
                 await handleReferral(referrerId, userId);
-                sendMessageWithOptions(chatId, "خوش امدید به RYOKU BOT");
+                sendMessageWithOptions(chatId, "خوش امدید به RIOKU BOT");
             }
         }
     } else if (referrerId) {
@@ -74,8 +75,8 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
     }
 
     if (!user.hasSeenImage) {
-        const referralLink = `https://t.me/Ry0ku_bot?start=${userId}`;
-        const websiteLink = `http://5.75.204.122:8080`
+        const referralLink = `https://t.me/Ri0ku_bot?start=${userId}`;
+        const websiteLink = `https://www.rioku.ir`
         await bot.sendPhoto(chatId, "./intro.jpg", {
             caption: `با دعوت هر نفر ۵۰ داگز هدیه بگیرید\n در بعضی روز های هفته هر نفر ۸۰ داگز 💸🔥💯\nلینک دعوت شما👇\n${referralLink}\n❗️ توجه کنید که زیر مجموعه های شما برای دریافت موجودی رایگان حتما باید شماره خود را تایید و در کانال ما عضو شوند \n✅ از امکانات دکمه وب ۳ (پایین سمت چپ چت) استفاده کنید تا صاحب امتیاز بیشتر و شانس بالاتری در لاتاری شوید. \n${websiteLink}`,
         });
@@ -96,12 +97,13 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
             {
                 reply_markup: {
                     inline_keyboard: [
-                        createInlineButtons(
-                            channelDoc.name.map((channelName) => ({
+                        ...channelDoc.name.map((channelName) => [
+                            {
                                 text: `Join ${channelName}`,
                                 url: `https://t.me/${channelName.replace("@", "")}`,
-                            }))
-                        ),
+                            },
+                        ]),
+                        [{ text: "عضو شدم", callback_data: "joined_check" }],
                     ],
                 },
             }
@@ -121,11 +123,39 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
 });
 
 
+bot.on("callback_query", async (query) => {
+    if(query.data != "joined_check") return
+    const channelDoc = await Channel.findOne()
+    const userId = query.from.id;
+    const chatId = query.message.chat.id;
+    const messageId = query.message.message_id;
+    let user = await User.findOne({ userId });
+
+    const isAdmin = user.isAdmin ? buttonsAdmin : buttons
+
+    const startOptions = {
+        reply_markup: {
+            inline_keyboard: createInlineKeyboard(isAdmin)
+        },
+    };
+
+    if (query.data === "joined_check") {
+        const isMember = await checkUserMembership(userId, chatId);
+
+        if (!isMember) {
+            bot.sendMessage(chatId ,"شما هنوز عضو کانال‌های ما نشده‌اید. لطفاً ابتدا عضو شوید.");
+        } else {
+            editMessageWithOptions(chatId ,messageId ,"عضویت شما تایید شد! اکنون می‌توانید از امکانات بات استفاده کنید." ,startOptions);
+        }
+    }
+});
+
 bot.on("callback_query", async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const messageId = callbackQuery.message.message_id;
     const userId = callbackQuery.from.id;
     const data = callbackQuery.data;
+    if(data == "joined_check") return
     let user = await User.findOne({ userId });
     const channelDoc = await Channel.findOne();
     const isAdmin = user.isAdmin ? buttonsAdmin : buttons
@@ -134,8 +164,19 @@ bot.on("callback_query", async (callbackQuery) => {
             inline_keyboard: createInlineKeyboard(isAdmin),
         },
     }
-
     switch (data) {
+        case "guideAdmin":
+            editMessageWithOptions(chatId ,messageId ,`
+                راهنمای مدیران\nاضافه کردن کانال:\nگزینه "اضافه کردن چنل" را انتخاب کنید و نام کانال را با @ اول آن ارسال کنید.\n\nحذف کانال:\nگزینه "حذف کردن چنل" را انتخاب کنید و نام کانال موردنظر را ارسال کنید.\n\nمدیریت ادمین‌ها:\nشناسه کاربری و وضعیت (true/false) ادمین را ارسال کنید.\n\nمدیریت پرداخت‌ها:\nلیست کاربران درخواست‌کننده برداشت را مشاهده کرده و وضعیت پرداخت را تغییر دهید.`
+            )
+            break
+
+        case "guide" :
+            editMessageWithOptions(chatId ,messageId ,`
+                کاربر عزیز خوش امدید\nشروع کار با ربات\nشروع:\nدعوت دوستان:\nاز طریق دکمه "دعوت از دوستان" می‌توانید لینک معرفی خود را دریافت کرده و با دوستان خود به اشتراک بگذارید.\nبا هر دعوت موفق، پاداش دریافت خواهید کرد.\n\nتأیید شماره تلفن:\nاز گزینه "اضافه کردن شماره تلفن" برای ثبت شماره تماس خود استفاده کنید.\nشماره تلفن تأیید شده برای دریافت پاداش‌ها ضروری است.\n\nعضویت در کانال‌ها:\nبرای استفاده از تمامی امکانات ربات، لازم است که در کانال‌های معرفی‌شده عضو شوید.\nاز طریق دکمه "کانال‌ها" می‌توانید لیست کانال‌های موردنیاز را مشاهده و عضو شوید.\n\nامکانات ربات\nکیف پول:\nبا استفاده از گزینه "کیف پول" می‌توانید موجودی خود را مشاهده کنید. همچنین در صورت داشتن موجودی کافی، می‌توانید درخواست برداشت بدهید.\n\nآدرس کیف پول:\nآدرس کیف پول خود را ثبت یا ویرایش کنید. این آدرس برای انتقال موجودی شما موردنیاز است.`
+            )
+            break
+
         case "phone":
             if(user.phoneNumber) {
                 editMessageWithOptions(chatId ,messageId ,`شماره همراه شما ${user.phoneNumber} میباشد  آیا میخواهید آن را تغییر دهید؟` , {
@@ -162,7 +203,7 @@ bot.on("callback_query", async (callbackQuery) => {
             break
             
         case 'back':
-            editMessageWithOptions(chatId, messageId, 'Ryoku BOT', startOptions)
+            editMessageWithOptions(chatId, messageId, 'Rioku BOT', startOptions)
             break;
 
         case "channels":
@@ -187,7 +228,7 @@ bot.on("callback_query", async (callbackQuery) => {
             break;
 
         case "add_friend":
-            const referralLink = `https://t.me/Ry0ku_bot?start=${userId}`;
+            const referralLink = `https://t.me/Ri0ku_bot?start=${userId}`;
             editMessageWithOptions(
                 chatId ,
                 messageId ,
@@ -240,22 +281,6 @@ bot.on("callback_query", async (callbackQuery) => {
                 sendMessageWithOptions(chatId, "User not found.");
             }
             break;
-
-        case "website":
-            editMessageWithOptions(
-                chatId,
-                messageId,
-                "برای گرفتن اطلاعات بیشتر وارد لینک زیر شوید",
-                {
-                    reply_markup: {
-                        inline_keyboard: [
-                            createInlineButtons([{ text: "Ryoku Website", url: "http://5.75.204.122:8080" }]),
-                            createBackButton()
-                        ],
-                    },
-                }
-            );
-            break;
         
         case "walletAddress":
             if(user.walletAddress.length){
@@ -284,7 +309,7 @@ bot.on("callback_query", async (callbackQuery) => {
             break;
 
         case "no":
-            editMessageWithOptions(chatId, messageId, 'Ryoku BOT', startOptions)
+            editMessageWithOptions(chatId, messageId, 'Rioku BOT', startOptions)
             break;
 
         case "withdraw_crypto":
