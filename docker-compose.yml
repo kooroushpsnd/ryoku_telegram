@@ -18,18 +18,18 @@ services:
       - mongo-db:/data/db
     restart: unless-stopped
 
-  vue_app:
-    build:
-      context: ../ryoku-web
-      dockerfile: Dockerfile
-    container_name: vue_app
-    ports:
-      - "443:8080"
-    volumes:
-      - ../ryoku-web:/app
-      - ./ssl:/app/ssl
-    restart: unless-stopped
-    command: ["npm" ,"run" ,"serve"]
+ # vue_app:
+   # build:
+    #  context: ../ryoku-web
+  #    dockerfile: Dockerfile
+   # container_name: vue_app
+   # ports:
+  #    - "443:8080"
+   # volumes:
+  #    - ../ryoku-web:/app
+ #     - ./ssl:/app/ssl
+#    restart: unless-stopped
+#    command: ["npm" ,"run" ,"serve"]
 
 volumes:
   mongo-db:
