@@ -76,9 +76,8 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
 
     if (!user.hasSeenImage) {
         const referralLink = `https://t.me/Ri0ku_bot?start=${userId}`;
-        const websiteLink = `https://www.rioku.ir`
-        await bot.sendPhoto(chatId, "./intro.jpg", {
-            caption: `با دعوت هر نفر ۵۰ داگز هدیه بگیرید\n در بعضی روز های هفته هر نفر ۸۰ داگز 💸🔥💯\nلینک دعوت شما👇\n${referralLink}\n❗️ توجه کنید که زیر مجموعه های شما برای دریافت موجودی رایگان حتما باید شماره خود را تایید و در کانال ما عضو شوند \n✅ از امکانات دکمه وب ۳ (پایین سمت چپ چت) استفاده کنید تا صاحب امتیاز بیشتر و شانس بالاتری در لاتاری شوید. \n${websiteLink}`,
+        await bot.sendPhoto(chatId, "./intro.png", {
+            caption: `با دعوت هر نفر ۵۰ داگز هدیه بگیرید\n در بعضی روز های هفته هر نفر ۸۰ داگز 💸🔥💯\nلینک دعوت شما👇\n${referralLink}\n❗️ توجه کنید که زیر مجموعه های شما برای دریافت موجودی رایگان حتما باید شماره خود را تایید و در کانال ما عضو شوند \n✅ از امکانات دکمه وب ۳ (پایین سمت چپ چت) استفاده کنید تا صاحب امتیاز بیشتر و شانس بالاتری در لاتاری شوید.`,
         });
         user.hasSeenImage = true;
         await user.save();
@@ -287,14 +286,17 @@ bot.on("callback_query", async (callbackQuery) => {
                 sendMessageWithOptions(chatId, "User not found.");
             }
             break;
-        
+
         case "walletAddress":
-            if(user.walletAddress.length){
+            const user1 = await User.findOne({ userId })
+            if(user1.walletAddress.length){
+                const escapedAddress = `<code>${user1.walletAddress}</code>`;
                 editMessageWithOptions(
                     chatId,
                     messageId,
-                    `آدرس کیف پول شما ${user.walletAddress} است \n آیا مایل به تعویض آن هستید`,
+                    `آدرس کیف پول شما ${escapedAddress} است  آیا مایل به تعویض آن هستید`,
                     {
+                        parse_mode: "HTML",
                         reply_markup: {
                             inline_keyboard: [
                                 createInlineButtons([
@@ -452,29 +454,6 @@ bot.on("callback_query", async (callbackQuery) => {
                     },
                 }
             );
-            break;
-
-        case "walletAddress":
-            const user1 = await User.findOne({ userId }) 
-            if(user1.walletAddress.length){
-                editMessageWithOptions(
-                    chatId,
-                    messageId,
-                    `آدرس کیف پول شما ${user1.walletAddress} است \n آیا مایل به تعویض آن هستید`,
-                    {
-                        reply_markup: {
-                            inline_keyboard: [
-                                createInlineButtons([
-                                    {text: "بله" , callback_data: "yes"} ,
-                                    {text: "خیر" , callback_data: "no"}
-                                ])
-                            ],
-                        },
-                    }
-                );
-            }else{
-                handleYesOption(chatId ,userId)
-            }
             break;
 
             default:

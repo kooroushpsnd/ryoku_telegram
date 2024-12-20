@@ -1,4 +1,3 @@
-const { isValidTronAddress ,isValidEthereumAddress ,isValidBitcoinAddress ,isValidDogecoinAddress ,isValidTonAddress} = require('./validationWallet')
 const bot = require('./app')
 const User = require("./models/userModel")
 const Channel = require("./models/channelsModel")
@@ -115,23 +114,18 @@ async function handleYesOption(chatId, userId) {
     sendMessageWithOptions(chatId, "لطفا ادرس کیف پول خود را وارد کنید");
     bot.once("message", async (response) => {
         if (response.text) {
-            const walletAddress = response.text.trim();
+            let walletAddress = response.text.trim();
             try {
-                if (
-                    isValidTronAddress(walletAddress) ||
-                    isValidBitcoinAddress(walletAddress) ||
-                    isValidDogecoinAddress(walletAddress) ||
-                    isValidEthereumAddress(walletAddress) ||
-                    isValidTonAddress(walletAddress)
-                ) {
+                if (walletAddress.length > 24){
                     let user = await User.findOneAndUpdate({ userId }, { walletAddress }, { new: true });
                     await user.save();
-                    sendMessageWithOptions(response.chat.id, `ادرس کیف پول شما تغییر کرد \n ${walletAddress}`);
+                    walletAddress = `<code>${response.text.trim()}</code>`
+                    sendMessageWithOptions(response.chat.id, `ادرس کیف پول شما تغییر کرد \n ${walletAddress}` ,{parse_mode: "HTML"});
                 } else {
                     sendMessageWithOptions(response.chat.id, "ادرس کیف پول اشتباه است");
                 }
             } catch (error) {
-                sendMessageWithOptions(response.chat.id, "خطایی رخ داد، لطفاً دوباره تلاش کنید.");
+                sendMessageWithOptions(response.chat.id, "خطایی رخ داد، لطفاً دوباره تلاش کنید."); 
             }
         }
     });
